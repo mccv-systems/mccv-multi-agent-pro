@@ -1,93 +1,72 @@
 import streamlit as st
 from groq import Groq
 
-# --- 1. PAGE CONFIGURATION & BRANDING ---
-st.set_page_config(
-    page_title="MCCV AI MULTI-AGENT PRO", 
-    page_icon="🛡️", 
-    layout="wide"
-)
+# --- 1. PAGE CONFIGURATION ---
+st.set_page_config(page_title="MCCV AI MULTI-AGENT PRO", page_icon="🛡️", layout="wide")
 
-# --- 2. THE BRAIN (GROQ API KEY) ---
-# This pulls your key safely from the Streamlit Cloud "Secrets" settings
-# Make sure you have added GROQ_API_KEY to your Streamlit Secrets!
+# --- 2. THE BRAIN ---
 client = Groq(api_key=st.secrets["GROQ_API_KEY"])
 
-# --- 3. SIDEBAR BRANDING (The Company Profile) ---
+# --- 3. SIDEBAR BRANDING & LEAD CAPTURE ---
 with st.sidebar:
-    # Your Company Logo (MCCV Strategic AI Solutions) - Linked to your GitHub
     st.image("https://raw.githubusercontent.com/mccv-systems/mccv-multi-agent-pro/main/logo1.png", use_container_width=True)
+    st.divider()
     
-    st.divider()
-    st.write("✨ **Your 24/7 Digital Partner**")
-    st.write("📍 *Muntinlupa City, PH*")
-    st.divider()
-    st.caption("A Product of:")
-    st.info("**MCCV Strategic AI Solutions**")
-    st.write("---")
-    st.write("💡 **Our Pillars:**")
-    st.write("✅ Integrity")
-    st.write("✅ Innovation")
-    st.write("✅ Impact")
-    st.divider()
-    st.success("✅ System: Online")
+    # --- LEAD CAPTURE FORM ---
+    st.subheader("📩 Request a Consultation")
+    with st.form("lead_form"):
+        name = st.text_input("Full Name")
+        contact = st.text_input("Phone or Email")
+        service = st.selectbox("Interested In:", ["Life Insurance", "Education Fund", "Retirement", "Estate Planning", "Security Consulting"])
+        submit_button = st.form_submit_button("Book My Discovery Call")
+        
+        if submit_button:
+            if name and contact:
+                st.success(f"Thank you, {name}! Melvyn's team will contact you at {contact} regarding {service}.")
+                # In the future, we can add code here to email this to you automatically!
+            else:
+                st.error("Please fill in your name and contact details.")
 
-# --- 4. THE SYSTEM INSTRUCTIONS (The AI's Identity) ---
+    st.divider()
+    st.info("**MCCV Strategic AI Solutions**")
+    st.write("✅ Integrity | ✅ Innovation | ✅ Impact")
+
+# --- 4. SYSTEM INSTRUCTIONS (Warming up the Lead) ---
 if "system_prompt" not in st.session_state:
     st.session_state.system_prompt = (
-        "You are 'MCCV AI MULTI-AGENT PRO,' a high-level digital assistant created and copyrighted by Melvyn C.C. Valenzuela "
-        "of MCCV Strategic AI Solutions. You represent the highest standard of Filipino professional integrity. "
-        "Speak in warm, professional, and helpful Taglish. Your goal is to provide expert guidance and "
-        "capture interest for your user's services in Insurance, Security, Coaching, or Real Estate."
+        "You are 'MCCV AI MULTI-AGENT PRO' created by Melvyn C.C. Valenzuela. "
+        "Your goal is to warm up potential leads for Financial Advisors and Security Consultants. "
+        "When people ask about insurance, explain that 'Insurance is Love made visible.' "
+        "Encourage them to fill out the form in the sidebar to get a personalized 'Future You Formula' session. "
+        "Always speak in helpful, professional Taglish."
     )
 
-# --- 5. SESSION STATE (The Memory) ---
+# --- 5. CHAT INTERFACE ---
 if "messages" not in st.session_state:
-    st.session_state.messages = [
-        {"role": "system", "content": st.session_state.system_prompt}
-    ]
+    st.session_state.messages = [{"role": "system", "content": st.session_state.system_prompt}]
 
-# --- 6. MAIN INTERFACE (The Product View) ---
-# Your Product Logo (MCCV AI MULTI-AGENT PRO) - Linked to your GitHub
 st.image("https://raw.githubusercontent.com/mccv-systems/mccv-multi-agent-pro/main/logo2.png", width=350)
 st.subheader("Smart Tactics. Better Results.")
-st.write("---")
 
-# Display the chat history
 for message in st.session_state.messages:
     if message["role"] != "system":
         with st.chat_message(message["role"]):
             st.write(message["content"])
 
-# --- 7. THE CHAT LOGIC (Using Llama 3 for Free) ---
 if prompt := st.chat_input("How can I help you grow your business today?"):
-    # Save and show what the user typed
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.write(prompt)
 
-    # Ask the Groq Engine for the answer
     with st.chat_message("assistant"):
         chat_completion = client.chat.completions.create(
-            messages=[
-                {"role": m["role"], "content": m["content"]}
-                for m in st.session_state.messages
-            ],
+            messages=[{"role": m["role"], "content": m["content"]} for m in st.session_state.messages],
             model="llama-3.3-70b-versatile",
         )
         response = chat_completion.choices[0].message.content
         st.write(response)
-    
-    # Save the bot's answer to its memory
     st.session_state.messages.append({"role": "assistant", "content": response})
 
-# --- 8. THE BRANDED FOOTER WITH COPYRIGHT ---
-st.write("") 
+# --- 6. FOOTER ---
 st.divider()
-st.markdown(
-    "<div style='text-align: center; color: grey; font-size: 0.8em;'>"
-    "© 2026 MELVYN C C VALENZUELA | MCCV Strategic AI Solutions<br>"
-    "Integrity • Innovation • Impact"
-    "</div>", 
-    unsafe_allow_html=True
-)
+st.markdown("<div style='text-align: center; color: grey;'>© 2026 MELVYN C C VALENZUELA</div>", unsafe_allow_html=True)
