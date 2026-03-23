@@ -9,42 +9,39 @@ client = Groq(api_key=st.secrets["GROQ_API_KEY"])
 with st.sidebar:
     st.image("https://raw.githubusercontent.com/mccv-systems/mccv-multi-agent-pro/main/logo1.png", use_container_width=True)
     st.divider()
-    st.subheader("📊 Lead Capture Active")
-    st.info("System: Personal Data & HLV Audit")
-    st.write("✅ **Strategy:** KYC (Know Your Client) First")
-    st.write("✅ **Goal:** Full Lead Identification")
+    st.subheader("📊 Audit Status")
+    st.info("System: Professional HLV Audit")
+    st.write("✅ **Tone:** Consultative & Trustworthy")
+    st.write("✅ **Method:** 10x Income Rule")
     st.divider()
     st.caption("© 2026 MCCV Strategic AI Solutions")
 
-# --- 3. THE "DATA-FIRST" SYSTEM PROMPT ---
+# --- 3. THE "PROFESSIONAL AUDITOR" SYSTEM PROMPT ---
 if "system_prompt" not in st.session_state:
     st.session_state.system_prompt = (
-        "You are the 'MCCV Digital Auditor.' Your goal is to capture Lead Data and conduct a Financial Health Check. "
-        "STRICT RULE: Ask only ONE question at a time. Wait for the user to answer before moving to the next. "
+        "You are the 'MCCV Digital Auditor,' a professional Financial AI Assistant. Your tone is consultative and trustworthy. "
+        "Your mission is to educate users on their protection gap. You never pressure; you audit. "
+        "STRICT RULE: Ask only ONE question at a time. "
         "FLOW: "
-        "1. Greet the user and ask: 'Ready na ba tayo para sa iyong 2-Minute Financial Health Audit?' "
-        "2. Question 1: What is your Complete Name? (First Name, Middle Name, and Family Name). "
-        "3. Question 2: What is your Complete Birthdate? (Month/Day/Year). "
-        "4. Question 3: What is your Phone Number and Email Address? "
-        "5. Question 4: How many Dependents (umaasa sa inyo) do you have? "
-        "6. Question 5: What is your Monthly Net Income? "
-        "7. Question 6: Current Savings or Insurance coverage? "
-        "8. Question 7: Monthly Expenses and Total Debts/Mortgages? "
-        "9. FINAL STEP: Calculate Human Life Value (Income x 10 years). Show the GAP (HLV - Savings). "
-        "If GAP > ₱1M, label as 'URGENCY: CRITICAL.' "
-        "Be professional and emphasize that this data is for their official Audit Record."
+        "1. Greet and ask: 'Ready na ba tayo para sa iyong 2-Minute Financial Health Audit?' "
+        "2. Capture Data: Full Name (First, Middle, Family), then Birthdate (MM/DD/YYYY), then Phone/Email. "
+        "3. Gather Financials: Dependents, Monthly Net Income, Current Savings/Insurance, and Monthly Expenses/Debts. "
+        "4. CALCULATION: Use the '10x Income Rule' (Monthly Income x 12 months x 10 years) to find the Human Life Value (HLV). "
+        "5. THE CLOSING (MANDATORY): Once data is gathered, say: "
+        "'Analysis Complete. [Full Name], your family faces a [Protection Gap Amount] protection gap if your income stops today.' "
+        "6. THE CTA: 'To receive a bridging plan, our senior advisor MELVYN will call you for a ZOOM or FACE-TO-FACE meeting to discuss your 1-page solution.'"
     )
 
 # --- 4. CHAT MEMORY ---
 if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "system", "content": st.session_state.system_prompt}]
-    initial_greeting = "Kumusta! Ako ang iyong MCCV Digital Auditor. Simulan natin ang iyong 2-Minute Financial Health Audit. Ready na ba tayo? (Yes/No)"
+    initial_greeting = "Kumusta! Ako ang iyong MCCV Digital Auditor. Simulan natin ang iyong 2-Minute Strategic Financial Audit. Ready na ba tayo? (Yes/No)"
     st.session_state.messages.append({"role": "assistant", "content": initial_greeting})
 
 # --- 5. MAIN INTERFACE ---
 st.image("https://raw.githubusercontent.com/mccv-systems/mccv-multi-agent-pro/main/logo2.png", width=350)
 st.subheader("🛡️ Strategic Financial Health Audit")
-st.write("*Securing your identity and your future, one step at a time.*")
+st.write("*Objective. Educational. Professional.*")
 
 for message in st.session_state.messages:
     if message["role"] != "system":
@@ -61,7 +58,7 @@ if prompt := st.chat_input("I-type ang iyong sagot dito..."):
         chat_completion = client.chat.completions.create(
             messages=[{"role": m["role"], "content": m["content"]} for m in st.session_state.messages],
             model="llama-3.3-70b-versatile",
-            temperature=0.2 # Keeping it very focused on the data gathering
+            temperature=0.2
         )
         response = chat_completion.choices[0].message.content
         st.write(response)
@@ -69,4 +66,4 @@ if prompt := st.chat_input("I-type ang iyong sagot dito..."):
 
 # --- 7. FOOTER ---
 st.divider()
-st.markdown("<div style='text-align: center; color: grey;'>MCCV AI MULTI-AGENT PRO | Strategic Audit System</div>", unsafe_allow_html=True)
+st.markdown("<div style='text-align: center; color: grey;'>MCCV AI MULTI-AGENT PRO | Powered by MCCV Strategic AI Solutions</div>", unsafe_allow_html=True)
