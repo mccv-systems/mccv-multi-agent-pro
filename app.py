@@ -1,95 +1,103 @@
 import streamlit as st
-import requests
-import json
+from groq import Groq
 
-# --- CONFIGURATION ---
-# You can swap this with your local Ollama URL (http://localhost:11434/api/chat) 
-# or a cloud API URL.
-API_URL = "https://api.groq.com/openai/v1/chat/completions" # Change if using Groq/OpenAI
-API_KEY = "YOUR_API_KEY_HERE" # Put your Groq/OpenAI key here or use st.secrets
+# --- 1. PAGE CONFIGURATION & BRANDING ---
+st.set_page_config(
+    page_title="MCCV AI MULTI-AGENT PRO", 
+    page_icon="🛡️", 
+    layout="wide"
+)
 
-st.set_page_config(page_title="MCCV Multi-Agent Pro", page_icon="🛡️")
+# --- 2. THE BRAIN (GROQ API) ---
+# Ensure "GROQ_API_KEY" is in your Streamlit Secrets!
+client = Groq(api_key=st.secrets["GROQ_API_KEY"])
 
-# --- CUSTOM STYLING ---
-st.markdown("""
-    <style>
-    .stChatMessage { border-radius: 15px; margin-bottom: 10px; }
-    .stChatInput { border-radius: 20px; }
-    </style>
-    """, unsafe_allow_html=True)
+# --- 3. SIDEBAR: THE AGENT'S COMMAND CENTER ---
+with st.sidebar:
+    # Your Company Logo
+    st.image("https://raw.githubusercontent.com/mccv-systems/mccv-multi-agent-pro/main/logo1.png", use_container_width=True)
+    
+    st.divider()
+    
+    # --- LEAD CAPTURE FORM ---
+    st.subheader("📩 Request a Consultation")
+    with st.form("lead_form"):
+        name = st.text_input("Full Name")
+        contact = st.text_input("Mobile / Email")
+        service = st.selectbox("Financial Goal:", [
+            "Life Protection (Income Replacement)", 
+            "Health & Critical Illness (PruHealth Prime)", 
+            "Investment & Savings (Elite Protector)", 
+            "Education Fund (PruLink)",
+            "Estate Planning"
+        ])
+        submit_button = st.form_submit_button("Book My 10-Min FNA")
+        
+        if submit_button:
+            if name and contact:
+                st.success(f"Salamat, {name}! Melvyn's team will contact you shortly regarding {service}.")
+            else:
+                st.error("Please provide your name and contact details.")
 
-st.title("🛡️ MCCV Multi-Agent Pro")
-st.caption("Digital Junior Associate for Pru Life UK Agents")
+    st.divider()
+    st.write("📍 *Muntinlupa City, PH*")
+    st.info("**MCCV Strategic AI Solutions**")
+    st.write("✅ Integrity | ✅ Innovation | ✅ Impact")
+    st.success("✅ Engine: Active (Groq Llama 3)")
 
-# --- INITIALIZE SESSION STATE ---
+# --- 4. THE JUNIOR ASSOCIATE "FNA" INSTRUCTIONS ---
+if "system_prompt" not in st.session_state:
+    st.session_state.system_prompt = (
+        "You are the 'Digital Junior Associate' for Melvyn C.C. Valenzuela, a Master Life Coach and Security Consultant. "
+        "Your mission is to perform a warm, professional 10-minute Financial Needs Analysis (FNA) in Taglish. "
+        "STRATEGY: Use the D.I.M.E. Method (Death/Protection, Income, Mortgage/Debt, Education). "
+        "1. Greet the user warmly and ask for their Age and if they have dependents (kids). "
+        "2. Ask about their monthly income range to qualify their budget. "
+        "3. Identify gaps: Ask what would happen to the family if their income stopped today. "
+        "4. RECOMMEND: Suggest 'PruHealth Prime' for health or 'Elite Protector' for high-value protection. "
+        "5. CLOSE: Encourage them to use the 'Request a Consultation' form in the sidebar for a personalized proposal from Melvyn."
+    )
+
+# --- 5. CHAT MEMORY ---
 if "messages" not in st.session_state:
     st.session_state.messages = [
-        {"role": "system", "content": """
-        You are the 'Digital Junior Associate' of Melvyn C.C. Valenzuela. 
-        Your goal: Conduct a 10-minute Financial Needs Analysis (FNA) using the D.I.M.E. method.
-        
-        RULES:
-        1. Speak in friendly, professional 'Taglish'.
-        2. Ask ONE question at a time to avoid overwhelming the user.
-        3. Sequence: 
-           - Greet and ask for Name/Goal.
-           - D (Death/Final Expenses): Ask about protection needs.
-           - I (Income): Ask for monthly income to calculate the gap.
-           - M (Mortgage/Debt): Ask about outstanding loans.
-           - E (Education/Endowment): Ask about children's school needs.
-        4. Calculate the gap and recommend PruLife Elite Protector or Health Prime.
-        5. If the budget is below 2k/month, suggest a starter plan.
-        6. End by saying you've forwarded the details to the Unit Manager.
-        """}
+        {"role": "system", "content": st.session_state.system_prompt}
     ]
 
-# --- DISPLAY CHAT HISTORY ---
+# --- 6. MAIN INTERFACE ---
+st.image("https://raw.githubusercontent.com/mccv-systems/mccv-multi-agent-pro/main/logo2.png", width=350)
+st.subheader("Your AI-Powered Financial Needs Analyst")
+st.write("---")
+
+# Display conversation
 for message in st.session_state.messages:
     if message["role"] != "system":
         with st.chat_message(message["role"]):
-            st.markdown(message["content"])
+            st.write(message["content"])
 
-# --- CHAT LOGIC ---
-if prompt := st.chat_input("Type your answer here..."):
-    # 1. Show User Message
+# --- 7. THE CHAT LOGIC ---
+if prompt := st.chat_input("Start your 10-minute FNA here..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
-        st.markdown(prompt)
+        st.write(prompt)
 
-    # 2. Generate AI Response
     with st.chat_message("assistant"):
-        response_placeholder = st.empty()
-        
-        # Prepare the data for the API
-        payload = {
-            "model": "llama-3.3-70b-versatile",
-            "messages": st.session_state.messages,
-            "temperature": 0.7
-        }
-        headers = {
-            "Authorization": f"Bearer {API_KEY}",
-            "Content-Type": "application/json"
-        }
+        chat_completion = client.chat.completions.create(
+            messages=[{"role": m["role"], "content": m["content"]} for m in st.session_state.messages],
+            model="llama-3.3-70b-versatile",
+        )
+        response = chat_completion.choices[0].message.content
+        st.write(response)
+    
+    st.session_state.messages.append({"role": "assistant", "content": response})
 
-        try:
-            # Note: For free deployment, ensure you handle the API key securely!
-            r = requests.post(API_URL, headers=headers, json=payload)
-            r.raise_for_status()
-            full_response = r.json()['choices'][0]['message']['content']
-            response_placeholder.markdown(full_response)
-            
-            # 3. Save AI Message to history
-            st.session_state.messages.append({"role": "assistant", "content": full_response})
-            
-        except Exception as e:
-            st.error(f"Associate is offline: {e}")
-
-# --- SIDEBAR DASHBOARD ---
-with st.sidebar:
-    st.header("📊 Unit Dashboard")
-    st.write("Target: **High-Value Leads**")
-    if st.button("Reset Conversation"):
-        st.session_state.messages = st.session_state.messages[:1]
-        st.rerun()
-    st.divider()
-    st.info("This bot uses the 'D.I.M.E.' logic by Melvyn C.C. Valenzuela.")
+# --- 8. THE BRANDED FOOTER ---
+st.write("") 
+st.divider()
+st.markdown(
+    "<div style='text-align: center; color: grey; font-size: 0.8em;'>"
+    "© 2026 MELVYN C C VALENZUELA | MCCV Strategic AI Solutions<br>"
+    "A Digital Force Multiplier for Financial Advisors"
+    "</div>", 
+    unsafe_allow_html=True
+)
