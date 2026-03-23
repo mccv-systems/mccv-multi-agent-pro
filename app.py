@@ -1,5 +1,5 @@
 import streamlit as st
-from openai import OpenAI
+from groq import Groq
 
 # --- 1. PAGE CONFIGURATION & BRANDING ---
 st.set_page_config(
@@ -8,13 +8,13 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- 2. THE BRAIN (API KEY) ---
-# This pulls your key safely from the Streamlit Cloud "Secrets" settings
-client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+# --- 2. THE BRAIN (GROQ API KEY) ---
+# Your specific Groq Key is now integrated
+client = Groq(api_key=st.secrets["GROQ_API_KEY"])
 
 # --- 3. SIDEBAR BRANDING (The Company Profile) ---
 with st.sidebar:
-    # Your Company Logo (MCCV Strategic AI Solutions)
+    # Your Company Logo
     st.image("https://i.postimg.cc/hvdqCRwF/LOGO_WITH_TAGLINE_3.png", use_container_width=True)
     
     st.divider()
@@ -25,18 +25,16 @@ with st.sidebar:
     st.info("**MCCV Strategic AI Solutions**")
     st.write("---")
     st.write("💡 **Our Pillars:**")
-    st.write("✅ Integrity")
-    st.write("✅ Innovation")
-    st.write("✅ Impact")
+    st.write("✅ Integrity | ✅ Innovation | ✅ Impact")
     st.divider()
-    st.success("✅ System: Online")
+    st.success("✅ System: Online (FREE ENGINE)")
 
-# --- 4. THE SYSTEM INSTRUCTIONS (The AI's Identity) ---
+# --- 4. THE SYSTEM INSTRUCTIONS (The AI's Rules) ---
 if "system_prompt" not in st.session_state:
     st.session_state.system_prompt = (
         "You are 'MCCV AI MULTI-AGENT PRO,' a high-level digital assistant created and copyrighted by Melvyn C.C. Valenzuela "
         "of MCCV Strategic AI Solutions. You represent the highest standard of Filipino professional integrity. "
-        "Speak in warm, professional, and helpful Taglish. Your goal is to provide expert guidance and "
+        "You speak in a warm, professional, and helpful Taglish. Your goal is to provide expert guidance and "
         "capture interest for your user's services in Insurance, Security, Coaching, or Real Estate."
     )
 
@@ -47,7 +45,7 @@ if "messages" not in st.session_state:
     ]
 
 # --- 6. MAIN INTERFACE (The Product View) ---
-# Your Product Logo (MCCV AI MULTI-AGENT PRO)
+# Your Product Logo
 st.image("https://i.postimg.cc/tJxHrGfQ/BOT_LOGO_3.png", width=350)
 st.subheader("Smart Tactics. Better Results.")
 st.write("---")
@@ -58,27 +56,26 @@ for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.write(message["content"])
 
-# --- 7. THE CHAT LOGIC (The Interaction) ---
+# --- 7. THE CHAT LOGIC (Using the Llama 3 Model) ---
 if prompt := st.chat_input("How can I help you grow your business today?"):
-    # Save and show what the user typed
+    # 1. Save and show what the user typed
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.write(prompt)
 
-    # Ask OpenAI for the answer
+    # 2. Ask the Groq Engine for the answer
     with st.chat_message("assistant"):
-        stream = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+        chat_completion = client.chat.completions.create(
             messages=[
                 {"role": m["role"], "content": m["content"]}
                 for m in st.session_state.messages
             ],
-            stream=True,
+            model="llama-3.3-70b-versatile", # High-speed professional model
         )
-        # "Stream" the text so it looks like the bot is typing
-        response = st.write_stream(stream)
+        response = chat_completion.choices[0].message.content
+        st.write(response)
     
-    # Save the bot's answer to its memory
+    # 3. Save the bot's answer to its memory
     st.session_state.messages.append({"role": "assistant", "content": response})
 
 # --- 8. THE BRANDED FOOTER WITH COPYRIGHT ---
